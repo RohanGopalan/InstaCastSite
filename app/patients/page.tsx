@@ -9,6 +9,7 @@ export default function Home() {
   const [painLevel, setPainLevel] = useState(5); // Default pain level
   const [address, setAddress] = useState(''); // New state for the address
   const [error, setError] = useState('');
+  const [name, setName] = useState(''); // New state for the name
 
   useEffect(() => {
     // Get the user's location when the component mounts
@@ -60,7 +61,7 @@ export default function Home() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert(`Submitted!\nLocation: ${JSON.stringify(location)}\nInjury: ${injuryArea}\nPain Level: ${painLevel}\nMessage: ${message}\nAddress: ${address}`);
+    alert(`Submitted!\nName: ${name}\nLocation: ${JSON.stringify(location)}\nInjury: ${injuryArea}\nPain Level: ${painLevel}\nMessage: ${message}\nAddress: ${address}`);
   };
 
   return (
@@ -72,27 +73,42 @@ export default function Home() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="location" className="block text-lg font-medium mb-2">
+            <label htmlFor="name" className="block text-[19px] font-medium mb-2">
+              Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full p-3 rounded-lg bg-gray-100"
+              placeholder="Enter your name"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="location" className="block text-[19px] font-medium mb-2">
               Location (Latitude, Longitude)
             </label>
             {location ? (
               <p className="text-[15px]">
-                Latitude: {location.latitude} <br /> Longitude: {location.longitude}
+                Latitude: {location.latitude},  Longitude: {location.longitude}
               </p>
             ) : (
-              <p className="text-sm">Fetching your location...</p>
+              <p className="text-[15px]">Fetching your location...</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="address" className="block text-lg font-medium mb-2">
+            <label htmlFor="address" className="block text-[19px] font-medium mb-2">
               Address
             </label>
-            <p className="text-sm">{address || 'Fetching address...'}</p>
+            <p className="text-[15px]">{address || 'Fetching address...'}</p>
           </div>
 
           <div>
-            <label htmlFor="injuryArea" className="block text-lg font-medium mb-2">
+            <label htmlFor="injuryArea" className="block text-[19px] font-medium mb-2">
               Area of Injury
             </label>
             <select
@@ -103,18 +119,17 @@ export default function Home() {
               required
             >
               <option value="">Select an area...</option>
-              <option value="head">Head</option>
-              <option value="arm">Arm</option>
-              <option value="leg">Leg</option>
-              <option value="torso">Torso</option>
+              <option value="head">Wrist</option>
+              <option value="arm">Elbow</option>
+              <option value="leg">Ankle</option>
+              <option value="torso">Knee</option>
               <option value="other">Other</option>
             </select>
           </div>
 
           <div>
-            <label htmlFor="painLevel" className="block text-lg font-medium mb-2">
-              Pain Level (1 = No pain, 10 = Worst pain imaginable)
-            </label>
+            <label htmlFor="painLevel" className="block text-[19px] font-medium mb-2">Pain Level</label>
+            <label htmlFor="painLevel" className="block text-[16px] mb-2">1 = No pain, 10 = Excruciating pain</label>
             <input
               type="range"
               id="painLevel"
