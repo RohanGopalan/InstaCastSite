@@ -1,65 +1,51 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { firebaseApp } from '@/firebaseConfig'; // Ensure this file is correctly set up
+
+const db = getFirestore(firebaseApp); // Initialize Firestore
 
 interface Location {
   latitude: number;
   longitude: number;
 }
 
-export default function Home() {
-  const [location, setLocation] = useState<Location | null>(null); // Location can be null initially
-  const [injuryArea, setInjuryArea] = useState<string>(''); // injuryArea is a string
-  const [message, setMessage] = useState<string>(''); // message is a string
-  const [painLevel, setPainLevel] = useState<number>(5); // Default pain level, it's a number
-  const [address, setAddress] = useState<string>(''); // address is a string
-  const [error, setError] = useState<string>(''); // error is a string
-  const [name, setName] = useState<string>(''); // name is a string
+export default function PatientPage() {
+  const [location, setLocation] = useState<Location | null>(null);
+  const [injuryArea, setInjuryArea] = useState<string>('');
+  const [message, setMessage] = useState<string>('');
+  const [painLevel, setPainLevel] = useState<number>(5);
+  const [address, setAddress] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const [name, setName] = useState<string>('');
 
   useEffect(() => {
-    // Get the user's location when the component mounts
+    // Get the current geolocation of the user
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-              let { latitude, longitude } = position.coords;
-          
-              // Round the latitude and longitude to 4 decimal places
-              latitude = Math.round(latitude * 10000) / 10000;
-              longitude = Math.round(longitude * 10000) / 10000;
-          
-              setLocation({ latitude, longitude }); // Set location when found
-              fetchAddress(latitude.toString(), longitude.toString()); // Fetch address when location is found
-            },
-            (err) => {
-              setError('Unable to retrieve location');
-            }
-          );
-          
-        (err: GeolocationPositionError) => {
-          setError('Unable to retrieve location');
-        }
-      } else {
-          setError('Geolocation is not supported by this browser');
-      }
-    }, []); // Add this line to properly close the useEffect hook
-        
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = Math.round(position.coords.latitude * 10000) / 10000;
+          const lng = Math.round(position.coords.longitude * 10000) / 10000;
+          setLocation({ latitude: lat, longitude: lng });
+          fetchAddress(lat.toString(), lng.toString());
+        },
+        () => setError('Unable to retrieve location')
+      );
+    } else {
+      setError('Geolocation is not supported by this browser');
+    }
+  }, []);
 
-  // Function to fetch address from OpenCage API
   const fetchAddress = async (latitude: string, longitude: string): Promise<void> => {
     const api_key = '461281886bb944ccaa5ba4387891963a'; // OpenCage API key
-    const query = `${latitude},${longitude}`;
-    const api_url = 'https://api.opencagedata.com/geocode/v1/json';
-    const request_url = `${api_url}?key=${api_key}&q=${encodeURIComponent(query)}&pretty=1&no_annotations=1`;
+    const api_url = `https://api.opencagedata.com/geocode/v1/json?key=${api_key}&q=${latitude},${longitude}&pretty=1&no_annotations=1`;
 
     try {
-      const response = await fetch(request_url);
+      const response = await fetch(api_url);
       if (response.ok) {
         const data = await response.json();
-        if (data.results.length > 0) {
-          setAddress(data.results[0].formatted); // Set address from the API response
-        } else {
-          setAddress('Address not found');
-        }
+        setAddress(data.results[0]?.formatted || 'Address not found');
       } else {
         console.log('Error fetching address:', response.status);
       }
@@ -69,9 +55,32 @@ export default function Home() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    alert(`Submitted!\nName: ${name}\nLocation: ${JSON.stringify(location)}\nInjury: ${injuryArea}\nPain Level: ${painLevel}\nMessage: ${message}\nAddress: ${address}`);
+
+    if (!name || !location || !injuryArea) {
+      alert('Please fill out all required fields.');
+      return;
+    }
+
+    const formData = {
+      name,
+      location,
+      injuryArea,
+      painLevel,
+      message,
+      address,
+      timestamp: new Date(),
+    };
+
+    try {
+      // Save the data to Firestore collection 'submissions'
+      await addDoc(collection(db, 'submissions'), formData);
+      alert('Data successfully saved to Firebase!');
+    } catch (error) {
+      console.error('Error saving data:', error);
+      alert('Failed to save data.');
+    }
   };
 
   return (
@@ -98,20 +107,18 @@ export default function Home() {
           </div>
 
           <div>
-            <label htmlFor="location" className="block text-[19px] font-medium mb-2">
+            <label className="block text-[19px] font-medium mb-2">
               Location (Latitude, Longitude)
             </label>
             {location ? (
-              <p className="text-[15px]">
-                Latitude: {location.latitude},  Longitude: {location.longitude}
-              </p>
+              <p className="text-[15px]">Latitude: {location.latitude}, Longitude: {location.longitude}</p>
             ) : (
               <p className="text-[15px]">Fetching your location...</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="address" className="block text-[19px] font-medium mb-2">
+            <label className="block text-[19px] font-medium mb-2">
               Address
             </label>
             <p className="text-[15px]">{address || 'Fetching address...'}</p>
@@ -129,17 +136,17 @@ export default function Home() {
               required
             >
               <option value="">Select an area...</option>
-              <option value="head">Wrist</option>
-              <option value="arm">Elbow</option>
-              <option value="leg">Ankle</option>
-              <option value="torso">Knee</option>
-              <option value="other">Other</option>
+              <option value="Wrist">Wrist</option>
+              <option value="Elbow">Elbow</option>
+              <option value="Ankle">Ankle</option>
+              <option value="Knee">Knee</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 
           <div>
             <label htmlFor="painLevel" className="block text-[19px] font-medium mb-2">Pain Level</label>
-            <label htmlFor="painLevel" className="block text-[16px] mb-2">1 = No pain, 10 = Excruciating pain</label>
+            <label className="block text-[16px] mb-2">1 = No pain, 10 = Excruciating pain</label>
             <input
               type="range"
               id="painLevel"
@@ -163,7 +170,7 @@ export default function Home() {
               id="message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              rows= {4}
+              rows={4}
               className="w-full p-3 rounded-lg bg-gray-100"
               placeholder="Provide any additional information..."
             />
@@ -174,7 +181,7 @@ export default function Home() {
               type="submit"
               className="w-full py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition duration-300"
             >
-              Submit
+              Save to Firestore
             </button>
           </div>
         </form>
