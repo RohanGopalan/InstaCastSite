@@ -108,7 +108,7 @@ export default function PatientPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-r from-[#588d94] to-[#cae1b9] text-white p-6 flex items-center justify-center">
       <div className="w-full max-w-md bg-white text-black p-6 rounded-lg shadow-lg">
         <h1 className="text-2xl font-semibold text-center mb-6">Emergency Assistance Form</h1>
 

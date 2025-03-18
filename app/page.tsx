@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6">
+    <div className="min-h-screen bg-gradient-to-r from-[#588d94] to-[#cae1b9] text-white p-6">
       <h1 className="text-[40px] font-semibold mb-12 text-center">InstaCast Emergency Site</h1>
       
       <div className="flex flex-col items-center justify-center space-y-6 w-full">
