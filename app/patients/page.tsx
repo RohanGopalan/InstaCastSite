@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, deleteDoc } from 'firebase/firestore';
 import { firebaseApp } from '@/firebaseConfig'; // Ensure this file is correctly set up
+
 
 const db = getFirestore(firebaseApp); // Initialize Firestore
 
@@ -55,6 +56,26 @@ export default function PatientPage() {
     }
   };
 
+  const deleteAllDocuments = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'submissions'));
+      
+      // Firebase doesn't have a native "delete collection" method,
+      // so we need to delete documents one by one
+      const deletePromises = querySnapshot.docs.map(doc => 
+        deleteDoc(doc.ref)
+      );
+      
+      await Promise.all(deletePromises);
+      
+      console.log('All documents have been deleted successfully.');
+      return true;
+    } catch (error) {
+      console.error('Error deleting documents:', error);
+      throw error; // Re-throw the error so it's caught in the handleSubmit function
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -74,7 +95,10 @@ export default function PatientPage() {
     };
 
     try {
+        
+
       // Save the data to Firestore collection 'submissions'
+      await deleteAllDocuments();
       await addDoc(collection(db, 'submissions'), formData);
       alert('Data successfully saved to Firebase!');
     } catch (error) {
