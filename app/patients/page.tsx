@@ -2,40 +2,50 @@
 
 import { useState, useEffect } from 'react';
 
+interface Location {
+  latitude: number;
+  longitude: number;
+}
+
 export default function Home() {
-  const [location, setLocation] = useState(null);
-  const [injuryArea, setInjuryArea] = useState('');
-  const [message, setMessage] = useState('');
-  const [painLevel, setPainLevel] = useState(5); // Default pain level
-  const [address, setAddress] = useState(''); // New state for the address
-  const [error, setError] = useState('');
-  const [name, setName] = useState(''); // New state for the name
+  const [location, setLocation] = useState<Location | null>(null); // Location can be null initially
+  const [injuryArea, setInjuryArea] = useState<string>(''); // injuryArea is a string
+  const [message, setMessage] = useState<string>(''); // message is a string
+  const [painLevel, setPainLevel] = useState<number>(5); // Default pain level, it's a number
+  const [address, setAddress] = useState<string>(''); // address is a string
+  const [error, setError] = useState<string>(''); // error is a string
+  const [name, setName] = useState<string>(''); // name is a string
 
   useEffect(() => {
     // Get the user's location when the component mounts
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          let { latitude, longitude } = position.coords;
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+              let { latitude, longitude } = position.coords;
           
-          // Round the latitude and longitude to 4 decimal places
-          latitude = latitude.toFixed(4);
-          longitude = longitude.toFixed(4);
-
-          setLocation({ latitude, longitude });
-          fetchAddress(latitude, longitude); // Fetch address when location is found
-        },
-        (err) => {
+              // Round the latitude and longitude to 4 decimal places
+              latitude = Math.round(latitude * 10000) / 10000;
+              longitude = Math.round(longitude * 10000) / 10000;
+          
+              setLocation({ latitude, longitude }); // Set location when found
+              fetchAddress(latitude.toString(), longitude.toString()); // Fetch address when location is found
+            },
+            (err) => {
+              setError('Unable to retrieve location');
+            }
+          );
+          
+        (err: GeolocationPositionError) => {
           setError('Unable to retrieve location');
         }
-      );
-    } else {
-      setError('Geolocation is not supported by this browser.');
-    }
-  }, []);
+      } else {
+          setError('Geolocation is not supported by this browser');
+      }
+    }, []); // Add this line to properly close the useEffect hook
+        
 
   // Function to fetch address from OpenCage API
-  const fetchAddress = async (latitude, longitude) => {
+  const fetchAddress = async (latitude: string, longitude: string): Promise<void> => {
     const api_key = '461281886bb944ccaa5ba4387891963a'; // OpenCage API key
     const query = `${latitude},${longitude}`;
     const api_url = 'https://api.opencagedata.com/geocode/v1/json';
@@ -59,7 +69,7 @@ export default function Home() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     alert(`Submitted!\nName: ${name}\nLocation: ${JSON.stringify(location)}\nInjury: ${injuryArea}\nPain Level: ${painLevel}\nMessage: ${message}\nAddress: ${address}`);
   };
@@ -136,7 +146,7 @@ export default function Home() {
               min="1"
               max="10"
               value={painLevel}
-              onChange={(e) => setPainLevel(e.target.value)}
+              onChange={(e) => setPainLevel(Number(e.target.value))}
               className="w-full"
             />
             <div className="flex justify-between text-sm mt-2">
@@ -153,7 +163,7 @@ export default function Home() {
               id="message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              rows="4"
+              rows= {4}
               className="w-full p-3 rounded-lg bg-gray-100"
               placeholder="Provide any additional information..."
             />
